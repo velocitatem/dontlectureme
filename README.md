@@ -1,5 +1,10 @@
 # DontLectureMe
 
+
+https://user-images.githubusercontent.com/60182044/225153948-e817307f-3ef3-4ec6-9772-558e525d3871.mp4
+
+
+
 > A program that pays attention to your lectures for you.
 
 Paying attention to a ~3h lecture is difficult, if not impossible. What if, your computer does it for you?

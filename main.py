@@ -1,8 +1,11 @@
+RECORDING_TIME = 15 # seconds
+import base64
 import whisper
 from itertools import cycle
 from shutil import get_terminal_size
 from threading import Thread
 from time import sleep
+import uuid
 
 
 class Loader:
@@ -20,7 +23,7 @@ class Loader:
         self.timeout = timeout
 
         self._thread = Thread(target=self._animate, daemon=True)
-        self.steps = ["⢿", "⣻", "⣽", "⣾", "⣷", "⣯", "⣟", "⡿"]
+        self.steps = ["|", "/", "-", "\\"]
         self.done = False
 
     def start(self):
@@ -48,6 +51,9 @@ class Loader:
         self.stop()
 
 def transcribe(audio_file):
+    # suppress any warnings
+    import warnings
+    warnings.filterwarnings("ignore")
     model = whisper.load_model("base")
     result = model.transcribe(audio_file)
     return result["text"]
@@ -65,12 +71,13 @@ import time
 def record():
 
     fs = 44100  # Sample rate
-    seconds = 60  # Duration of recording
+    seconds = RECORDING_TIME  # Duration of recording
 
     myrecording = sd.rec(int(seconds * fs), samplerate=fs, channels=2)
     sd.wait()  # Wait until recording is finished
-    sf.write('output.wav', myrecording, fs)  # Save as WAV file
-    return 'output.wav'
+    fileName = str(uuid.uuid4()) + ".wav"
+    sf.write(fileName, myrecording, fs)  # Save as WAV file
+    return fileName
 
 
 # read keywords from a file keywords.txt
@@ -79,19 +86,47 @@ with open('keywords.txt', 'r') as f:
     keywords = [line.strip() for line in f.readlines()]
 
 def check_keywords(transcription):
+    # return the keyword that was matched
     for keyword in keywords:
         if keyword in transcription:
-            return True
-    return False
+            return keyword
+    return None
 
-def notify():
+
+def notify(context):
     import notify2
     notify2.init('DontLectureMe')
-    n = notify2.Notification('DontLectureMe', 'You are being lectured')
+    n = notify2.Notification('Keyword match', context)
     n.show()
+
+import openai
+def contextualize(transcript, keyword_match):
+    prompt = f"The transcript from the class at the moment is: {transcript}.\nYou requested to be notified when the keyword {keyword_match} is mentioned.\nIn what context has it been metioned in the transcript?\nContext:\n"
+    response = openai.Completion.create(
+        engine="text-davinci-003",
+        prompt=prompt,
+        temperature=0.7,
+        max_tokens=100,
+        top_p=1,
+        frequency_penalty=0,
+        presence_penalty=0
+    )
+    return response["choices"][0]["text"]
 
 
 def main():
+    import sqlite3
+    dateString = time.strftime("%Y-%m-%d")
+    conn = sqlite3.connect(f"donotlectureme-{dateString}.db")
+    c = conn.cursor()
+    # crate a table if it doesn't exist
+    # table with columns: timestamp, audio, transcription, keyword_match, context
+    command = "CREATE TABLE IF NOT EXISTS lectures (timestamp TEXT, audio TEXT, transcription TEXT, keyword_match TEXT, context TEXT)"
+    # execute the command
+    c.execute(command)
+    # commit the changes
+    conn.commit()
+
     while True:
         loader = Loader("Recording audio").start()
         audio_file = record() # you can run the demo by changing this to "feynman-cut.mp3"
@@ -102,8 +137,21 @@ def main():
         transcription = transcribe(audio_file)
         print(transcription)
         loader.stop()
-        if check_keywords(transcription):
-            notify()
+        match = check_keywords(transcription)
+        context = None
+        if match:
+            context = contextualize(transcription, match)
+            notify(context)
+        # save the raw audio file, the transcription, the keyword match, and the context to the database
+        timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+        transcription = base64.b64encode(transcription.encode()).decode()
+        command = f"INSERT INTO lectures VALUES ('{timestamp}', '{audio_file}', '{transcription}', '{match}', '{context}')"
+        print(command)
+        c.execute(command)
+        conn.commit()
+    c.close()
+
+
 
 if __name__ == '__main__':
     main()

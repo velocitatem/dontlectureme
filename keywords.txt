@@ -1,1 +1,4 @@
-electron
+regression
+confidence estimated slope
+inferences about the true slope
+adequacy

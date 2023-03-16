@@ -7,7 +7,7 @@ https://user-images.githubusercontent.com/60182044/225153948-e817307f-3ef3-4ec6-
 
 > A program that pays attention to your lectures for you.
 
-Paying attention to a ~3h lecture is difficult, if not impossible. What if, your computer does it for you?
+Paying attention to a ~3h lecture is difficult, especially with ADHD. What if, your computer does it for you?
 
 You might be thinking, "but that defeats the purpose of even being there", yes, yes it does, but some universities have mandatory attendance. In some cases, desperate times call for desperate measures.
 
@@ -25,6 +25,12 @@ python3 main.py
 ```
 
 The program will then listen to the microphone and try to recognize the keywords. If it does, it will prompt you with a notification.
+
+After the lecture, the program continuously saves the lecture into a database (sqlite) with the current date as the name, you can then use the sowing-kit to compile the lecture into a single file (audio and transcript):
+
+```bash
+python3 sowing-kit.py <date>.db
+```
 
 ## How to install 📥
 

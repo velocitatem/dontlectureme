@@ -22,7 +22,7 @@ audioFiles = [row[1] for row in mat]
 import subprocess
 
 # the output file name
-output = 'output.wav'
+output = sys.argv[1].split('/')[-1].split('.')[0] + '.wav'
 
 # the command to run
 cmd = f"sox {' '.join(audioFiles)} {output}"

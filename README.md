@@ -9,7 +9,7 @@ https://user-images.githubusercontent.com/60182044/225153948-e817307f-3ef3-4ec6-
 
 Paying attention to a ~3h lecture is difficult, especially with ADHD. What if, your computer does it for you?
 
-You might be thinking, "but that defeats the purpose of even being there", yes, yes it does, but some universities have mandatory attendance. In some cases, desperate times call for desperate measures.
+You might be thinking, "but that defeats the purpose of even being there", yes.
 
 ## Solution 💡
 1. You study the material before (You actually have to do this) and take notes.

@@ -1,4 +1,4 @@
-!(logo)[./vis.png]
+![logo](./vis.png)
 # DontLectureMe
 
 

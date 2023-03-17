@@ -114,6 +114,8 @@ def contextualize(transcript, keyword_match):
     return response["choices"][0]["text"]
 
 
+import asyncio
+import threading
 def main():
     import sqlite3
     dateString = time.strftime("%Y-%m-%d")
@@ -131,25 +133,46 @@ def main():
         loader = Loader("Recording audio").start()
         audio_file = record() # you can run the demo by changing this to "feynman-cut.mp3"
         loader.stop()
-        # create an animation of transcribing the audio file here
 
-        loader = Loader("Transcribing audio").start()
-        transcription = transcribe(audio_file)
-        print(transcription)
-        loader.stop()
-        match = check_keywords(transcription)
-        context = None
-        if match:
-            context = contextualize(transcription, match)
-            notify(context)
-        # save the raw audio file, the transcription, the keyword match, and the context to the database
-        timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
-        transcription = base64.b64encode(transcription.encode()).decode()
-        command = f"INSERT INTO lectures VALUES ('{timestamp}', '{audio_file}', '{transcription}', '{match}', '{context}')"
-        print(command)
-        c.execute(command)
-        conn.commit()
-    c.close()
+        # we can do this by running the transcription in a separate thread
+        # we can also run the transcription in a separate process
+
+        def run_transcription(audio_file):
+            conn = sqlite3.connect(f"donotlectureme-{dateString}.db")
+            c = conn.cursor()
+            loader = Loader("Transcribing audio").start()
+            transcription = transcribe(audio_file)
+            print(transcription)
+            loader.stop()
+            match = check_keywords(transcription)
+            context = None
+            if match:
+                context = contextualize(transcription, match)
+                notify(context)
+            # save the raw audio file, the transcription, the keyword match, and the context to the database
+            timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+            transcription = base64.b64encode(transcription.encode()).decode()
+            command = f"INSERT INTO lectures VALUES ('{timestamp}', '{audio_file}', '{transcription}', '{match}', '{context}')"
+            print(command)
+            c.execute(command)
+            conn.commit()
+            conn.close()
+
+
+        # we can run the transcription in a separate thread
+        t = threading.Thread(target=run_transcription, args=(audio_file,))
+        t.start()
+
+
+
+
+
+
+
+
+
+
+
 
 
 
